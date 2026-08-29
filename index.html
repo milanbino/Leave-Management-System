@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Employee Leave Management System</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+</head>
+<body class="bg-slate-900 text-slate-100 antialiased min-h-screen p-4 md:p-8">
+
+  <!-- Main Container -->
+  <div class="max-w-6xl mx-auto space-y-6">
+
+    <!-- Header & Role Switcher -->
+    <header class="bg-slate-800 border border-slate-700 rounded-2xl p-6 shadow-xl flex flex-col md:flex-row items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <div class="w-12 h-12 rounded-xl bg-blue-600/20 text-blue-400 flex items-center justify-center font-bold text-2xl">
+          🌴
+        </div>
+        <div>
+          <h1 class="text-2xl font-bold tracking-tight text-white">Leave Management System</h1>
+          <p class="text-xs text-slate-400">Java OOP Principles • Web Dashboard</p>
+        </div>
+      </div>
+
+      <!-- Mode Switcher -->
+      <div class="flex items-center gap-2 bg-slate-900/80 p-1.5 rounded-xl border border-slate-700">
+        <button id="tab-employee-btn" onclick="switchRole('employee')" class="px-4 py-2 text-sm font-medium rounded-lg transition-all bg-blue-600 text-white shadow-md">
+          👤 Employee Portal
+        </button>
+        <button id="tab-manager-btn" onclick="switchRole('manager')" class="px-4 py-2 text-sm font-medium rounded-lg transition-all text-slate-400 hover:text-white">
+          👔 Manager Portal
+        </button>
+        <button id="tab-calendar-btn" onclick="switchRole('calendar')" class="px-4 py-2 text-sm font-medium rounded-lg transition-all text-slate-400 hover:text-white">
+          📅 Team Calendar
+        </button>
+      </div>
+    </header>
+
+    <!-- Overview Stats Bar -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+      <div class="bg-slate-800 border border-slate-700 rounded-xl p-4 shadow-sm">
+        <p class="text-xs font-medium text-slate-400 uppercase tracking-wider">Total Requests</p>
+        <p id="stat-total" class="text-2xl font-bold text-white mt-1">0</p>
+      </div>
+      <div class="bg-slate-800 border border-slate-700 rounded-xl p-4 shadow-sm">
+        <p class="text-xs font-medium text-amber-400 uppercase tracking-wider">Pending Approval</p>
+        <p id="stat-pending" class="text-2xl font-bold text-amber-400 mt-1">0</p>
+      </div>
+      <div class="bg-slate-800 border border-slate-700 rounded-xl p-4 shadow-sm">
+        <p class="text-xs font-medium text-emerald-400 uppercase tracking-wider">Approved Leaves</p>
+        <p id="stat-approved" class="text-2xl font-bold text-emerald-400 mt-1">0</p>
+      </div>
+      <div class="bg-slate-800 border border-slate-700 rounded-xl p-4 shadow-sm">
+        <p class="text-xs font-medium text-rose-400 uppercase tracking-wider">Rejected Requests</p>
+        <p id="stat-rejected" class="text-2xl font-bold text-rose-400 mt-1">0</p>
+      </div>
+    </div>
+
+    <!-- Notification Alert -->
+    <div id="toast" class="hidden p-4 rounded-xl border transition-all text-sm font-medium"></div>
+
+    <!-- 1. EMPLOYEE PORTAL VIEW -->
+    <main id="view-employee" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      
+      <!-- Submission Form -->
+      <section class="lg:col-span-1 bg-slate-800 border border-slate-700 rounded-2xl p-6 shadow-sm space-y-4">
+        <div class="border-b border-slate-700 pb-4">
+          <h2 class="text-lg font-semibold text-white">Submit Leave Request</h2>
+          <p class="text-xs text-slate-400">Select profile and enter leave details</p>
+        </div>
+
+        <form id="leave-form" onsubmit="handleFormSubmit(event)" class="space-y-4">
+          <!-- Employee Selector -->
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 mb-1 uppercase">Logged-in Employee</label>
+            <select id="emp-select" onchange="renderEmployeeRequests()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </select>
+          </div>
+
+          <!-- Leave Type -->
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 mb-1 uppercase">Leave Type</label>
+            <select id="leave-type" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+              <option value="CASUAL">CASUAL</option>
+              <option value="SICK">SICK</option>
+              <option value="ANNUAL">ANNUAL</option>
+              <option value="EMERGENCY">EMERGENCY</option>
+            </select>
+          </div>
+
+          <!-- Dates Grid -->
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-semibold text-slate-400 mb-1 uppercase">Start Date</label>
+              <input type="date" id="start-date" onchange="calculateLiveDuration()" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-400 mb-1 uppercase">End Date</label>
+              <input type="date" id="end-date" onchange="calculateLiveDuration()" required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+          </div>
+
+          <!-- Automatic Duration Display -->
+          <div class="bg-slate-900 p-3 rounded-xl border border-slate-700 flex items-center justify-between">
+            <span class="text-xs text-slate-400 font-medium">Automatic Duration:</span>
+            <span id="duration-badge" class="text-sm font-bold text-blue-400">0 days</span>
+          </div>
+
+          <!-- Reason -->
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 mb-1 uppercase">Reason</label>
+            <textarea id="leave-reason" rows="2" placeholder="State reason for leave..." required class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+          </div>
+
+          <!-- Submit Button -->
+          <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm py-2.5 rounded-xl shadow-md transition-all flex items-center justify-center gap-2">
+            ✈️ Submit Request
+          </button>
+        </form>
+      </section>
+
+      <!-- Employee Request History -->
+      <section class="lg:col-span-2 bg-slate-800 border border-slate-700 rounded-2xl p-6 shadow-sm space-y-4">
+        <div class="flex items-center justify-between border-b border-slate-700 pb-4">
+          <div>
+            <h2 class="text-lg font-semibold text-white">My Leave Applications</h2>
+            <p class="text-xs text-slate-400">Submitted requests and current approval status</p>
+          </div>
+          <span id="employee-badge" class="px-3 py-1 rounded-full text-xs font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20"></span>
+        </div>
+
+        <!-- Table -->
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm border-collapse">
+            <thead>
+              <tr class="border-b border-slate-700 text-xs font-semibold text-slate-400 uppercase">
+                <th class="py-3 px-2">Req ID</th>
+                <th class="py-3 px-2">Type</th>
+                <th class="py-3 px-2">Dates</th>
+                <th class="py-3 px-2">Duration</th>
+                <th class="py-3 px-2">Reason</th>
+                <th class="py-3 px-2 text-right">Status</th>
+              </tr>
+            </thead>
+            <tbody id="employee-requests-tbody" class="divide-y divide-slate-700/50">
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <!-- 2. MANAGER PORTAL VIEW -->
+    <main id="view-manager" class="hidden space-y-6">
+      <section class="bg-slate-800 border border-slate-700 rounded-2xl p-6 shadow-sm space-y-4">
+        <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b border-slate-700 pb-4">
+          <div>
+            <h2 class="text-lg font-semibold text-white">Manager Review Queue</h2>
+            <p class="text-xs text-slate-400">Review and approve/reject pending team leave requests</p>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <span class="text-xs text-slate-400 font-medium">Logged-in Manager:</span>
+            <select id="manager-select" class="bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none">
+            </select>
+          </div>
+        </div>
+
+        <!-- Pending Table -->
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm border-collapse">
+            <thead>
+              <tr class="border-b border-slate-700 text-xs font-semibold text-slate-400 uppercase">
+                <th class="py-3 px-2">Req ID</th>
+                <th class="py-3 px-2">Employee</th>
+                <th class="py-3 px-2">Type</th>
+                <th class="py-3 px-2">Dates</th>
+                <th class="py-3 px-2">Duration</th>
+                <th class="py-3 px-2">Reason</th>
+                <th class="py-3 px-2 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="manager-requests-tbody" class="divide-y divide-slate-700/50">
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <!-- 3. TEAM CALENDAR VIEW -->
+    <main id="view-calendar" class="hidden space-y-6">
+      <section class="bg-slate-800 border border-slate-700 rounded-2xl p-6 shadow-sm space-y-4">
+        <div class="border-b border-slate-700 pb-4 flex items-center justify-between">
+          <div>
+            <h2 class="text-lg font-semibold text-white">Team Leave Calendar</h2>
+            <p class="text-xs text-slate-400">Only APPROVED leave applications appear on this schedule</p>
+          </div>
+          <span class="px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+            ✓ Verified Approved Schedule
+          </span>
+        </div>
+
+        <!-- Calendar Grid -->
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm border-collapse">
+            <thead>
+              <tr class="border-b border-slate-700 text-xs font-semibold text-slate-400 uppercase bg-slate-900/50">
+                <th class="py-3 px-4">Employee</th>
+                <th class="py-3 px-4">Department</th>
+                <th class="py-3 px-4">Leave Type</th>
+                <th class="py-3 px-4">Start Date</th>
+                <th class="py-3 px-4">End Date</th>
+                <th class="py-3 px-4 text-right">Duration</th>
+              </tr>
+            </thead>
+            <tbody id="calendar-tbody" class="divide-y divide-slate-700/50">
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+  </div>
+
+  <!-- JavaScript Logic -->
+  <script>
+    const employees = [
+      { id: 101, name: 'Esther', email: 'esther@company.com', dept: 'IT', role: 'Employee' },
+      { id: 102, name: 'Anu', email: 'anu@company.com', dept: 'IT', role: 'Employee' },
+      { id: 103, name: 'Rahul', email: 'rahul@company.com', dept: 'IT', role: 'Employee' },
+      { id: 104, name: 'David', email: 'david@company.com', dept: 'HR', role: 'Employee' },
+      { id: 105, name: 'Sophia', email: 'sophia@company.com', dept: 'Finance', role: 'Employee' }
+    ];
+
+    const managers = [
+      { id: 201, name: 'John', email: 'john@company.com', dept: 'IT', role: 'Manager' },
+      { id: 202, name: 'Sarah', email: 'sarah@company.com', dept: 'HR', role: 'Manager' }
+    ];
+
+    let leaveRequests = [
+      { id: 1001, empId: 101, empName: 'Esther', dept: 'IT', type: 'CASUAL', start: '2026-09-01', end: '2026-09-03', duration: 3, reason: 'Personal work', status: 'APPROVED' },
+      { id: 1002, empId: 102, empName: 'Anu', dept: 'IT', type: 'SICK', start: '2026-09-10', end: '2026-09-11', duration: 2, reason: 'Fever & rest', status: 'PENDING' },
+      { id: 1003, empId: 103, empName: 'Rahul', dept: 'IT', type: 'ANNUAL', start: '2026-09-15', end: '2026-09-18', duration: 4, reason: 'Vacation trip', status: 'PENDING' }
+    ];
+
+    let nextRequestId = 1004;
+
+    document.addEventListener('DOMContentLoaded', () => {
+      populateDropdowns();
+      setDefaultDates();
+      updateStats();
+      renderEmployeeRequests();
+      renderManagerQueue();
+      renderTeamCalendar();
+    });
+
+    function populateDropdowns() {
+      const empSelect = document.getElementById('emp-select');
+      empSelect.innerHTML = employees.map(e => `<option value="${e.id}">${e.id} - ${e.name} (${e.dept})</option>`).join('');
+
+      const mgrSelect = document.getElementById('manager-select');
+      mgrSelect.innerHTML = managers.map(m => `<option value="${m.id}">${m.id} - ${m.name} (${m.dept} Manager)</option>`).join('');
+    }
+
+    function setDefaultDates() {
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('start-date').value = today;
+      document.getElementById('end-date').value = today;
+      calculateLiveDuration();
+    }
+
+    function calculateLiveDuration() {
+      const startVal = document.getElementById('start-date').value;
+      const endVal = document.getElementById('end-date').value;
+      const badge = document.getElementById('duration-badge');
+
+      if (startVal && endVal) {
+        const startDate = new Date(startVal);
+        const endDate = new Date(endVal);
+
+        if (endDate >= startDate) {
+          const diffTime = Math.abs(endDate - startDate);
+          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+          badge.textContent = `${diffDays} day(s)`;
+          badge.className = "text-sm font-bold text-blue-400";
+          return diffDays;
+        } else {
+          badge.textContent = "Invalid date range";
+          badge.className = "text-sm font-bold text-rose-400";
+          return 0;
+        }
+      }
+      return 0;
+    }
+
+    function handleFormSubmit(event) {
+      event.preventDefault();
+
+      const empId = parseInt(document.getElementById('emp-select').value);
+      const emp = employees.find(e => e.id === empId);
+      const type = document.getElementById('leave-type').value;
+      const start = document.getElementById('start-date').value;
+      const end = document.getElementById('end-date').value;
+      const reason = document.getElementById('leave-reason').value.trim();
+
+      const duration = calculateLiveDuration();
+      if (duration <= 0) {
+        showToast('End date cannot be before start date!', 'error');
+        return;
+      }
+
+      if (!reason) {
+        showToast('Please enter a valid reason!', 'error');
+        return;
+      }
+
+      const newReq = {
+        id: nextRequestId++,
+        empId: emp.id,
+        empName: emp.name,
+        dept: emp.dept,
+        type: type,
+        start: start,
+        end: end,
+        duration: duration,
+        reason: reason,
+        status: 'PENDING'
+      };
+
+      leaveRequests.push(newReq);
+      document.getElementById('leave-reason').value = '';
+
+      showToast(`Leave request ${newReq.id} submitted successfully (${duration} days)!`, 'success');
+      updateStats();
+      renderEmployeeRequests();
+      renderManagerQueue();
+    }
+
+    function renderEmployeeRequests() {
+      const empId = parseInt(document.getElementById('emp-select').value);
+      const emp = employees.find(e => e.id === empId);
+      document.getElementById('employee-badge').textContent = `Logged as: ${emp.name} (${emp.dept})`;
+
+      const empRequests = leaveRequests.filter(r => r.empId === empId);
+      const tbody = document.getElementById('employee-requests-tbody');
+
+      if (empRequests.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="py-6 text-center text-xs text-slate-400">No leave applications found for this employee.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = empRequests.map(r => `
+        <tr class="hover:bg-slate-700/30 transition-colors">
+          <td class="py-3 px-2 font-mono font-medium">#${r.id}</td>
+          <td class="py-3 px-2"><span class="px-2 py-0.5 rounded text-xs font-semibold ${getLeaveTypeStyle(r.type)}">${r.type}</span></td>
+          <td class="py-3 px-2 text-xs font-medium text-slate-300">${r.start} to ${r.end}</td>
+          <td class="py-3 px-2 font-semibold text-white">${r.duration} day(s)</td>
+          <td class="py-3 px-2 text-xs text-slate-400 max-w-xs truncate">${r.reason}</td>
+          <td class="py-3 px-2 text-right">${getStatusBadge(r.status)}</td>
+        </tr>
+      `).join('');
+    }
+
+    function renderManagerQueue() {
+      const pending = leaveRequests.filter(r => r.status === 'PENDING');
+      const tbody = document.getElementById('manager-requests-tbody');
+
+      if (pending.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" class="py-6 text-center text-xs text-slate-400">🎉 No pending requests awaiting review.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = pending.map(r => `
+        <tr class="hover:bg-slate-700/30 transition-colors">
+          <td class="py-3 px-2 font-mono font-medium">#${r.id}</td>
+          <td class="py-3 px-2 font-medium text-white">${r.empName} <span class="text-xs text-slate-400">(${r.dept})</span></td>
+          <td class="py-3 px-2"><span class="px-2 py-0.5 rounded text-xs font-semibold ${getLeaveTypeStyle(r.type)}">${r.type}</span></td>
+          <td class="py-3 px-2 text-xs font-medium text-slate-300">${r.start} to ${r.end}</td>
+          <td class="py-3 px-2 font-semibold text-white">${r.duration} day(s)</td>
+          <td class="py-3 px-2 text-xs text-slate-400 max-w-xs truncate">${r.reason}</td>
+          <td class="py-3 px-2 text-right space-x-1">
+            <button onclick="approveRequest(${r.id})" class="px-2.5 py-1 text-xs font-medium bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-all shadow-sm">Approve</button>
+            <button onclick="rejectRequest(${r.id})" class="px-2.5 py-1 text-xs font-medium bg-rose-600 hover:bg-rose-700 text-white rounded-lg transition-all shadow-sm">Reject</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function approveRequest(id) {
+      const req = leaveRequests.find(r => r.id === id);
+      if (req && req.status === 'PENDING') {
+        req.status = 'APPROVED';
+        showToast(`Leave Request #${id} APPROVED successfully!`, 'success');
+        updateStats();
+        renderEmployeeRequests();
+        renderManagerQueue();
+        renderTeamCalendar();
+      }
+    }
+
+    function rejectRequest(id) {
+      const req = leaveRequests.find(r => r.id === id);
+      if (req && req.status === 'PENDING') {
+        req.status = 'REJECTED';
+        showToast(`Leave Request #${id} REJECTED.`, 'error');
+        updateStats();
+        renderEmployeeRequests();
+        renderManagerQueue();
+      }
+    }
+
+    function renderTeamCalendar() {
+      const approved = leaveRequests.filter(r => r.status === 'APPROVED');
+      const tbody = document.getElementById('calendar-tbody');
+
+      if (approved.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="py-6 text-center text-xs text-slate-400">No approved leaves scheduled in the team calendar.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = approved.map(r => `
+        <tr class="hover:bg-slate-700/30 transition-colors">
+          <td class="py-3 px-4 font-semibold text-white">${r.empName}</td>
+          <td class="py-3 px-4 text-xs font-medium text-slate-400">${r.dept}</td>
+          <td class="py-3 px-4"><span class="px-2.5 py-0.5 rounded text-xs font-semibold ${getLeaveTypeStyle(r.type)}">${r.type}</span></td>
+          <td class="py-3 px-4 text-xs font-medium text-slate-300">${r.start}</td>
+          <td class="py-3 px-4 text-xs font-medium text-slate-300">${r.end}</td>
+          <td class="py-3 px-4 text-right font-bold text-blue-400">${r.duration} day(s)</td>
+        </tr>
+      `).join('');
+    }
+
+    function updateStats() {
+      document.getElementById('stat-total').textContent = leaveRequests.length;
+      document.getElementById('stat-pending').textContent = leaveRequests.filter(r => r.status === 'PENDING').length;
+      document.getElementById('stat-approved').textContent = leaveRequests.filter(r => r.status === 'APPROVED').length;
+      document.getElementById('stat-rejected').textContent = leaveRequests.filter(r => r.status === 'REJECTED').length;
+    }
+
+    function switchRole(role) {
+      document.getElementById('view-employee').classList.add('hidden');
+      document.getElementById('view-manager').classList.add('hidden');
+      document.getElementById('view-calendar').classList.add('hidden');
+
+      document.getElementById('tab-employee-btn').className = "px-4 py-2 text-sm font-medium rounded-lg transition-all text-slate-400 hover:text-white";
+      document.getElementById('tab-manager-btn').className = "px-4 py-2 text-sm font-medium rounded-lg transition-all text-slate-400 hover:text-white";
+      document.getElementById('tab-calendar-btn').className = "px-4 py-2 text-sm font-medium rounded-lg transition-all text-slate-400 hover:text-white";
+
+      if (role === 'employee') {
+        document.getElementById('view-employee').classList.remove('hidden');
+        document.getElementById('tab-employee-btn').className = "px-4 py-2 text-sm font-medium rounded-lg transition-all bg-blue-600 text-white shadow-md";
+      } else if (role === 'manager') {
+        document.getElementById('view-manager').classList.remove('hidden');
+        document.getElementById('tab-manager-btn').className = "px-4 py-2 text-sm font-medium rounded-lg transition-all bg-blue-600 text-white shadow-md";
+      } else if (role === 'calendar') {
+        document.getElementById('view-calendar').classList.remove('hidden');
+        document.getElementById('tab-calendar-btn').className = "px-4 py-2 text-sm font-medium rounded-lg transition-all bg-blue-600 text-white shadow-md";
+      }
+    }
+
+    function getStatusBadge(status) {
+      if (status === 'APPROVED') return `<span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">✓ APPROVED</span>`;
+      if (status === 'REJECTED') return `<span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-500/10 text-rose-400 border border-rose-500/20">✕ REJECTED</span>`;
+      return `<span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20">⏳ PENDING</span>`;
+    }
+
+    function getLeaveTypeStyle(type) {
+      if (type === 'CASUAL') return 'bg-purple-500/10 text-purple-400 border border-purple-500/20';
+      if (type === 'SICK') return 'bg-rose-500/10 text-rose-400 border border-rose-500/20';
+      if (type === 'ANNUAL') return 'bg-blue-500/10 text-blue-400 border border-blue-500/20';
+      return 'bg-amber-500/10 text-amber-400 border border-amber-500/20';
+    }
+
+    function showToast(message, type) {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.className = `p-4 rounded-xl border transition-all text-sm font-medium ${type === 'success' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-rose-500/10 border-rose-500/20 text-rose-400'}`;
+      toast.classList.remove('hidden');
+
+      setTimeout(() => {
+        toast.classList.add('hidden');
+      }, 4000);
+    }
+  </script>
+</body>
+</html>
