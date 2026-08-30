@@ -54,8 +54,7 @@ public class Main {
     }
 
     private static void handleEmployeeLogin() {
-        System.out.println("\n--- Sample Employee Accounts ---");
-        System.out.println("ID 101 (Esther) - Pass: esther123 | ID 102 (Anu) - Pass: anu123 | ID 103 (Rahul) - Pass: rahul123");
+        System.out.println("\n--- EMPLOYEE LOGIN ---");
         int empId = readIntInput("Enter Employee ID: ");
         System.out.print("Enter Password: ");
         String password = scanner.nextLine().trim();
@@ -96,8 +95,7 @@ public class Main {
     }
 
     private static void handleManagerLogin() {
-        System.out.println("\n--- Sample Manager Accounts ---");
-        System.out.println("ID 201 (John Manager) - Pass: john201 | ID 202 (Sarah Manager) - Pass: sarah202");
+        System.out.println("\n--- MANAGER LOGIN ---");
         int managerId = readIntInput("Enter Manager ID: ");
         System.out.print("Enter Password: ");
         String password = scanner.nextLine().trim();

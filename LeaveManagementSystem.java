@@ -24,19 +24,10 @@ public class LeaveManagementSystem {
     }
 
     /**
-     * Seeds initial sample employees and managers with distinct passwords.
+     * Seeds initial sample data (currently empty so users must sign up first).
      */
     private void seedSampleData() {
-        // Sample Employees (ID, Name, Email, Dept, Password)
-        employees.add(new Employee(101, "Esther", "esther@company.com", "IT", "esther123"));
-        employees.add(new Employee(102, "Anu", "anu@company.com", "IT", "anu123"));
-        employees.add(new Employee(103, "Rahul", "rahul@company.com", "IT", "rahul123"));
-        employees.add(new Employee(104, "David", "david@company.com", "HR", "david123"));
-        employees.add(new Employee(105, "Sophia", "sophia@company.com", "Finance", "sophia123"));
-
-        // Sample Managers (ID, Name, Email, Dept, Password)
-        employees.add(new Manager(201, "John", "john@company.com", "IT", "john201"));
-        employees.add(new Manager(202, "Sarah", "sarah@company.com", "HR", "sarah202"));
+        // Starts empty - employees and managers sign up via registration portal
     }
 
     /**
