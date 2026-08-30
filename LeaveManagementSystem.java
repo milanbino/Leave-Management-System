@@ -24,19 +24,63 @@ public class LeaveManagementSystem {
     }
 
     /**
-     * Seeds initial sample employees and manager.
+     * Seeds initial sample employees and managers with distinct passwords.
      */
     private void seedSampleData() {
-        // Sample Employees
-        employees.add(new Employee(101, "Esther", "esther@company.com", "IT"));
-        employees.add(new Employee(102, "Anu", "anu@company.com", "IT"));
-        employees.add(new Employee(103, "Rahul", "rahul@company.com", "IT"));
-        employees.add(new Employee(104, "David", "david@company.com", "HR"));
-        employees.add(new Employee(105, "Sophia", "sophia@company.com", "Finance"));
+        // Sample Employees (ID, Name, Email, Dept, Password)
+        employees.add(new Employee(101, "Esther", "esther@company.com", "IT", "esther123"));
+        employees.add(new Employee(102, "Anu", "anu@company.com", "IT", "anu123"));
+        employees.add(new Employee(103, "Rahul", "rahul@company.com", "IT", "rahul123"));
+        employees.add(new Employee(104, "David", "david@company.com", "HR", "david123"));
+        employees.add(new Employee(105, "Sophia", "sophia@company.com", "Finance", "sophia123"));
 
-        // Sample Managers (Demonstrates Inheritance & Polymorphism)
-        employees.add(new Manager(201, "John", "john@company.com", "IT"));
-        employees.add(new Manager(202, "Sarah", "sarah@company.com", "HR"));
+        // Sample Managers (ID, Name, Email, Dept, Password)
+        employees.add(new Manager(201, "John", "john@company.com", "IT", "john201"));
+        employees.add(new Manager(202, "Sarah", "sarah@company.com", "HR", "sarah202"));
+    }
+
+    /**
+     * Registers a new regular Employee.
+     */
+    public Employee registerEmployee(int id, String name, String email, String dept, String password) {
+        if (findEmployeeById(id) != null) {
+            System.out.println("Error: Employee ID " + id + " already exists!");
+            return null;
+        }
+        Employee emp = new Employee(id, name, email, dept, password);
+        employees.add(emp);
+        System.out.println("Employee " + name + " registered successfully with ID " + id + "!");
+        return emp;
+    }
+
+    /**
+     * Registers a new Manager.
+     */
+    public Manager registerManager(int id, String name, String email, String dept, String password) {
+        if (findEmployeeById(id) != null) {
+            System.out.println("Error: Manager ID " + id + " already exists!");
+            return null;
+        }
+        Manager mgr = new Manager(id, name, email, dept, password);
+        employees.add(mgr);
+        System.out.println("Manager " + name + " registered successfully with ID " + id + "!");
+        return mgr;
+    }
+
+    /**
+     * Authenticates an employee or manager with ID and Password.
+     */
+    public Employee authenticateUser(int id, String password) {
+        Employee emp = findEmployeeById(id);
+        if (emp == null) {
+            System.out.println("Error: Account ID " + id + " not found!");
+            return null;
+        }
+        if (!emp.verifyPassword(password)) {
+            System.out.println("Error: Incorrect password for ID " + id + "!");
+            return null;
+        }
+        return emp;
     }
 
     /**

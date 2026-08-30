@@ -9,13 +9,15 @@ public class Employee {
     private String name;
     private String email;
     private String department;
+    private String password;
 
     // Constructor to initialize an Employee object
-    public Employee(int employeeId, String name, String email, String department) {
+    public Employee(int employeeId, String name, String email, String department, String password) {
         this.employeeId = employeeId;
         this.name = name;
         this.email = email;
         this.department = department;
+        this.password = password;
     }
 
     // Getters and Setters
@@ -49,6 +51,18 @@ public class Employee {
 
     public void setDepartment(String department) {
         this.department = department;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public boolean verifyPassword(String inputPassword) {
+        return this.password != null && this.password.equals(inputPassword);
     }
 
     /**

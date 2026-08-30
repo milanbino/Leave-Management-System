@@ -30,11 +30,14 @@ public class Main {
                     handleManagerLogin();
                     break;
                 case 3:
+                    handleRegistrationFlow();
+                    break;
+                case 4:
                     System.out.println("\nThank you for using Employee Leave Management System. Goodbye!");
                     running = false;
                     break;
                 default:
-                    System.out.println("\nInvalid choice! Please enter 1, 2, or 3.");
+                    System.out.println("\nInvalid choice! Please enter 1, 2, 3, or 4.");
             }
         }
         scanner.close();
@@ -46,21 +49,26 @@ public class Main {
         System.out.println("========================================");
         System.out.println("1. Employee Login");
         System.out.println("2. Manager Login");
-        System.out.println("3. Exit");
+        System.out.println("3. Register New Account");
+        System.out.println("4. Exit");
     }
 
     private static void handleEmployeeLogin() {
-        System.out.println("\n--- Sample Employee IDs ---");
-        System.out.println("101: Esther (IT) | 102: Anu (IT) | 103: Rahul (IT) | 104: David (HR) | 105: Sophia (Finance)");
+        System.out.println("\n--- Sample Employee Accounts ---");
+        System.out.println("ID 101 (Esther) - Pass: esther123 | ID 102 (Anu) - Pass: anu123 | ID 103 (Rahul) - Pass: rahul123");
         int empId = readIntInput("Enter Employee ID: ");
-        Employee emp = system.findEmployeeById(empId);
+        System.out.print("Enter Password: ");
+        String password = scanner.nextLine().trim();
 
-        if (emp == null) {
-            System.out.println("Error: Employee ID " + empId + " not found!");
+        Employee emp = system.authenticateUser(empId, password);
+        if (emp == null || emp instanceof Manager) {
+            if (emp instanceof Manager) {
+                System.out.println("Error: User ID " + empId + " is a Manager. Please use Manager Login!");
+            }
             return;
         }
 
-        System.out.println("\nWelcome, " + emp.getName() + " (" + emp.getRole() + ")");
+        System.out.println("\nLogin Successful! Welcome, " + emp.getName() + " (" + emp.getRole() + ")");
         boolean loggedIn = true;
 
         while (loggedIn) {
@@ -88,18 +96,22 @@ public class Main {
     }
 
     private static void handleManagerLogin() {
-        System.out.println("\n--- Sample Manager IDs ---");
-        System.out.println("201: John (IT Manager) | 202: Sarah (HR Manager)");
+        System.out.println("\n--- Sample Manager Accounts ---");
+        System.out.println("ID 201 (John Manager) - Pass: john201 | ID 202 (Sarah Manager) - Pass: sarah202");
         int managerId = readIntInput("Enter Manager ID: ");
-        Employee emp = system.findEmployeeById(managerId);
+        System.out.print("Enter Password: ");
+        String password = scanner.nextLine().trim();
 
+        Employee emp = system.authenticateUser(managerId, password);
         if (emp == null || !(emp instanceof Manager)) {
-            System.out.println("Error: Manager ID " + managerId + " not found or user is not a Manager!");
+            if (emp != null && !(emp instanceof Manager)) {
+                System.out.println("Error: User ID " + managerId + " is a regular Employee. Please use Employee Login!");
+            }
             return;
         }
 
         Manager manager = (Manager) emp; // Safe downcasting
-        System.out.println("\nWelcome Manager, " + manager.getName() + "!");
+        System.out.println("\nLogin Successful! Welcome Manager, " + manager.getName() + "!");
         boolean loggedIn = true;
 
         while (loggedIn) {
@@ -223,6 +235,49 @@ public class Main {
 
         int reqId = readIntInput("\nEnter Request ID to Reject: ");
         system.rejectRequest(reqId, manager);
+    }
+
+    private static void handleRegistrationFlow() {
+        System.out.println("\n========== REGISTER NEW ACCOUNT ==========");
+        System.out.println("Select Role to Register:");
+        System.out.println("1. Employee");
+        System.out.println("2. Manager");
+        int roleChoice = readIntInput("Enter choice: ");
+
+        if (roleChoice != 1 && roleChoice != 2) {
+            System.out.println("Invalid role choice!");
+            return;
+        }
+
+        int id = readIntInput("Enter New Account ID (e.g. 106 for Employee, 203 for Manager): ");
+        if (system.findEmployeeById(id) != null) {
+            System.out.println("Error: Account ID " + id + " already exists!");
+            return;
+        }
+
+        System.out.print("Enter Full Name: ");
+        String name = scanner.nextLine().trim();
+
+        System.out.print("Enter Email Address: ");
+        String email = scanner.nextLine().trim();
+
+        System.out.print("Enter Department (e.g. IT, HR, Finance): ");
+        String dept = scanner.nextLine().trim();
+
+        System.out.print("Enter Password: ");
+        String password = scanner.nextLine().trim();
+
+        if (name.isEmpty() || email.isEmpty() || dept.isEmpty() || password.isEmpty()) {
+            System.out.println("Error: All fields are required!");
+            return;
+        }
+
+        if (roleChoice == 1) {
+            system.registerEmployee(id, name, email, dept, password);
+        } else {
+            system.registerManager(id, name, email, dept, password);
+        }
+        System.out.println("Registration complete! You can now log in with your ID (" + id + ") and password.");
     }
 
     private static int readIntInput(String prompt) {

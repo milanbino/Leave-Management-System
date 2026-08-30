@@ -7,8 +7,8 @@
 public class Manager extends Employee implements LeaveApprover {
 
     // Constructor calling the superclass (Employee) constructor
-    public Manager(int employeeId, String name, String email, String department) {
-        super(employeeId, name, email, department);
+    public Manager(int employeeId, String name, String email, String department, String password) {
+        super(employeeId, name, email, department, password);
     }
 
     /**

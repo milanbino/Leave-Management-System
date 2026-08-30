@@ -14,8 +14,8 @@
     <!-- Toast Notification Banner -->
     <div id="toast" class="hidden p-4 rounded-xl border transition-all text-sm font-medium shadow-lg"></div>
 
-    <!-- ==================== 1. LOGIN SCREEN VIEW ==================== -->
-    <main id="view-login" class="max-w-md mx-auto my-12 space-y-6">
+    <!-- ==================== 1. LOGIN & REGISTRATION SCREEN VIEW ==================== -->
+    <main id="view-login" class="max-w-md mx-auto my-6 space-y-6">
       
       <!-- App Header Branding -->
       <div class="text-center space-y-2">
@@ -23,19 +23,22 @@
           🌴
         </div>
         <h1 class="text-2xl font-bold tracking-tight text-white">Leave Management System</h1>
-        <p class="text-xs text-slate-400">Java OOP Project Portal • Login to continue</p>
+        <p class="text-xs text-slate-400">Java OOP Project Portal • Login or Register to continue</p>
       </div>
 
-      <!-- Login Card -->
+      <!-- Main Login & Register Card -->
       <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-2xl space-y-6">
         
-        <!-- Login Role Tabs -->
-        <div class="grid grid-cols-2 gap-2 bg-slate-950 p-1.5 rounded-xl border border-slate-800">
-          <button id="login-tab-emp" onclick="switchLoginRole('Employee')" class="py-2 text-xs font-semibold rounded-lg transition-all bg-blue-600 text-white shadow-md">
-            👤 Employee Login
+        <!-- Portal Selection Tabs -->
+        <div class="grid grid-cols-3 gap-1 bg-slate-950 p-1.5 rounded-xl border border-slate-800">
+          <button id="tab-btn-emp" onclick="switchAuthTab('Employee')" class="py-2 text-[11px] sm:text-xs font-semibold rounded-lg transition-all bg-blue-600 text-white shadow-md">
+            👤 Employee
           </button>
-          <button id="login-tab-mgr" onclick="switchLoginRole('Manager')" class="py-2 text-xs font-semibold rounded-lg transition-all text-slate-400 hover:text-white">
-            👔 Manager Login
+          <button id="tab-btn-mgr" onclick="switchAuthTab('Manager')" class="py-2 text-[11px] sm:text-xs font-semibold rounded-lg transition-all text-slate-400 hover:text-white">
+            👔 Manager
+          </button>
+          <button id="tab-btn-reg" onclick="switchAuthTab('Register')" class="py-2 text-[11px] sm:text-xs font-semibold rounded-lg transition-all text-slate-400 hover:text-white">
+            📝 Sign Up
           </button>
         </div>
 
@@ -43,7 +46,7 @@
         <form id="form-employee-login" onsubmit="handleLoginSubmit(event)" class="space-y-4">
           <div>
             <label class="block text-xs font-semibold text-slate-400 mb-1 uppercase">Select Employee Account</label>
-            <select id="login-emp-id" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <select id="login-emp-id" onchange="autoFillPassword('Employee')" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
               <option value="101">101 - Esther (IT Dept)</option>
               <option value="102">102 - Anu (IT Dept)</option>
               <option value="103">103 - Rahul (IT Dept)</option>
@@ -53,8 +56,11 @@
           </div>
 
           <div>
-            <label class="block text-xs font-semibold text-slate-400 mb-1 uppercase">Password</label>
-            <input type="password" value="password123" placeholder="••••••••" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <div class="flex items-center justify-between mb-1">
+              <label class="block text-xs font-semibold text-slate-400 uppercase">Password</label>
+              <span id="hint-emp-pass" class="text-[10px] text-blue-400">Pass: esther123</span>
+            </div>
+            <input type="password" id="login-emp-pass" placeholder="Enter employee password" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
           </div>
 
           <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm py-3 rounded-xl shadow-md transition-all flex items-center justify-center gap-2">
@@ -66,15 +72,18 @@
         <form id="form-manager-login" onsubmit="handleLoginSubmit(event)" class="hidden space-y-4">
           <div>
             <label class="block text-xs font-semibold text-slate-400 mb-1 uppercase">Select Manager Account</label>
-            <select id="login-mgr-id" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-purple-500">
+            <select id="login-mgr-id" onchange="autoFillPassword('Manager')" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-purple-500">
               <option value="201">201 - John (IT Manager)</option>
               <option value="202">202 - Sarah (HR Manager)</option>
             </select>
           </div>
 
           <div>
-            <label class="block text-xs font-semibold text-slate-400 mb-1 uppercase">Password</label>
-            <input type="password" value="admin123" placeholder="••••••••" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-purple-500">
+            <div class="flex items-center justify-between mb-1">
+              <label class="block text-xs font-semibold text-slate-400 uppercase">Password</label>
+              <span id="hint-mgr-pass" class="text-[10px] text-purple-400">Pass: john201</span>
+            </div>
+            <input type="password" id="login-mgr-pass" placeholder="Enter manager password" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-purple-500">
           </div>
 
           <button type="submit" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold text-sm py-3 rounded-xl shadow-md transition-all flex items-center justify-center gap-2">
@@ -82,8 +91,61 @@
           </button>
         </form>
 
-        <!-- Quick Demo Accounts -->
-        <div class="border-t border-slate-800 pt-4 space-y-2">
+        <!-- New User Registration Form -->
+        <form id="form-register" onsubmit="handleRegisterSubmit(event)" class="hidden space-y-4">
+          <div class="border-b border-slate-800 pb-2">
+            <h3 class="text-xs font-bold uppercase text-emerald-400">Create New Account</h3>
+            <p class="text-[11px] text-slate-400">Register as a new Employee or Manager</p>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-[11px] font-semibold text-slate-400 mb-1 uppercase">Role</label>
+              <select id="reg-role" onchange="updateSuggestedId()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-2 text-xs text-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                <option value="Employee">Employee</option>
+                <option value="Manager">Manager</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[11px] font-semibold text-slate-400 mb-1 uppercase">Assigned ID</label>
+              <input type="number" id="reg-id" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-2 text-xs text-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-400 mb-1 uppercase">Full Name</label>
+            <input type="text" id="reg-name" placeholder="e.g. Alex Rivera" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-[11px] font-semibold text-slate-400 mb-1 uppercase">Email</label>
+              <input type="email" id="reg-email" placeholder="alex@company.com" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-2 text-xs text-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
+            </div>
+            <div>
+              <label class="block text-[11px] font-semibold text-slate-400 mb-1 uppercase">Department</label>
+              <select id="reg-dept" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-2.5 py-2 text-xs text-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                <option value="IT">IT</option>
+                <option value="HR">HR</option>
+                <option value="Finance">Finance</option>
+                <option value="Marketing">Marketing</option>
+                <option value="Sales">Sales</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-400 mb-1 uppercase">Set Password</label>
+            <input type="password" id="reg-pass" placeholder="Create a secure password" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
+          </div>
+
+          <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs py-2.5 rounded-xl shadow-md transition-all flex items-center justify-center gap-2">
+            ✨ Register Account & Sign In
+          </button>
+        </form>
+
+        <!-- Quick Demo One-Click Login -->
+        <div id="quick-demo-container" class="border-t border-slate-800 pt-4 space-y-2">
           <p class="text-xs text-slate-500 text-center font-medium">⚡ Quick Demo One-Click Login:</p>
           <div class="flex flex-wrap gap-2 justify-center">
             <button onclick="quickLogin(101, 'Employee')" class="px-2.5 py-1 text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg border border-slate-700">Esther (101)</button>
@@ -300,15 +362,15 @@
 
   <!-- JavaScript Portal & State Engine -->
   <script>
-    // State Store
-    const users = [
-      { id: 101, name: 'Esther', email: 'esther@company.com', dept: 'IT', role: 'Employee' },
-      { id: 102, name: 'Anu', email: 'anu@company.com', dept: 'IT', role: 'Employee' },
-      { id: 103, name: 'Rahul', email: 'rahul@company.com', dept: 'IT', role: 'Employee' },
-      { id: 104, name: 'David', email: 'david@company.com', dept: 'HR', role: 'Employee' },
-      { id: 105, name: 'Sophia', email: 'sophia@company.com', dept: 'Finance', role: 'Employee' },
-      { id: 201, name: 'John', email: 'john@company.com', dept: 'IT', role: 'Manager' },
-      { id: 202, name: 'Sarah', email: 'sarah@company.com', dept: 'HR', role: 'Manager' }
+    // State Store with Individual Passwords
+    let users = [
+      { id: 101, name: 'Esther', email: 'esther@company.com', dept: 'IT', role: 'Employee', password: 'esther123' },
+      { id: 102, name: 'Anu', email: 'anu@company.com', dept: 'IT', role: 'Employee', password: 'anu123' },
+      { id: 103, name: 'Rahul', email: 'rahul@company.com', dept: 'IT', role: 'Employee', password: 'rahul123' },
+      { id: 104, name: 'David', email: 'david@company.com', dept: 'HR', role: 'Employee', password: 'david123' },
+      { id: 105, name: 'Sophia', email: 'sophia@company.com', dept: 'Finance', role: 'Employee', password: 'sophia123' },
+      { id: 201, name: 'John', email: 'john@company.com', dept: 'IT', role: 'Manager', password: 'john201' },
+      { id: 202, name: 'Sarah', email: 'sarah@company.com', dept: 'HR', role: 'Manager', password: 'sarah202' }
     ];
 
     let leaveRequests = [
@@ -318,55 +380,161 @@
     ];
 
     let currentUser = null;
-    let currentLoginRole = 'Employee';
+    let activeAuthTab = 'Employee';
     let nextRequestId = 1004;
 
     document.addEventListener('DOMContentLoaded', () => {
+      populateDropdowns();
+      autoFillPassword('Employee');
       setDefaultDates();
+      updateSuggestedId();
     });
 
-    function switchLoginRole(role) {
-      currentLoginRole = role;
-      const tabEmp = document.getElementById('login-tab-emp');
-      const tabMgr = document.getElementById('login-tab-mgr');
+    function populateDropdowns() {
+      const empSelect = document.getElementById('login-emp-id');
+      const empUsers = users.filter(u => u.role === 'Employee');
+      empSelect.innerHTML = empUsers.map(e => `<option value="${e.id}">${e.id} - ${e.name} (${e.dept})</option>`).join('');
+
+      const mgrSelect = document.getElementById('login-mgr-id');
+      const mgrUsers = users.filter(u => u.role === 'Manager');
+      mgrSelect.innerHTML = mgrUsers.map(m => `<option value="${m.id}">${m.id} - ${m.name} (${m.dept} Manager)</option>`).join('');
+    }
+
+    function autoFillPassword(role) {
+      if (role === 'Employee') {
+        const empId = parseInt(document.getElementById('login-emp-id').value);
+        const user = users.find(u => u.id === empId);
+        if (user) {
+          document.getElementById('login-emp-pass').value = user.password;
+          document.getElementById('hint-emp-pass').textContent = `Pass: ${user.password}`;
+        }
+      } else if (role === 'Manager') {
+        const mgrId = parseInt(document.getElementById('login-mgr-id').value);
+        const user = users.find(u => u.id === mgrId);
+        if (user) {
+          document.getElementById('login-mgr-pass').value = user.password;
+          document.getElementById('hint-mgr-pass').textContent = `Pass: ${user.password}`;
+        }
+      }
+    }
+
+    function switchAuthTab(tab) {
+      activeAuthTab = tab;
+      const btnEmp = document.getElementById('tab-btn-emp');
+      const btnMgr = document.getElementById('tab-btn-mgr');
+      const btnReg = document.getElementById('tab-btn-reg');
+
       const formEmp = document.getElementById('form-employee-login');
       const formMgr = document.getElementById('form-manager-login');
+      const formReg = document.getElementById('form-register');
+      const demoContainer = document.getElementById('quick-demo-container');
 
-      if (role === 'Employee') {
-        tabEmp.className = "py-2 text-xs font-semibold rounded-lg transition-all bg-blue-600 text-white shadow-md";
-        tabMgr.className = "py-2 text-xs font-semibold rounded-lg transition-all text-slate-400 hover:text-white";
+      [formEmp, formMgr, formReg].forEach(f => f.classList.add('hidden'));
+      btnEmp.className = "py-2 text-[11px] sm:text-xs font-semibold rounded-lg transition-all text-slate-400 hover:text-white";
+      btnMgr.className = "py-2 text-[11px] sm:text-xs font-semibold rounded-lg transition-all text-slate-400 hover:text-white";
+      btnReg.className = "py-2 text-[11px] sm:text-xs font-semibold rounded-lg transition-all text-slate-400 hover:text-white";
+
+      if (tab === 'Employee') {
+        btnEmp.className = "py-2 text-[11px] sm:text-xs font-semibold rounded-lg transition-all bg-blue-600 text-white shadow-md";
         formEmp.classList.remove('hidden');
-        formMgr.classList.add('hidden');
-      } else {
-        tabMgr.className = "py-2 text-xs font-semibold rounded-lg transition-all bg-purple-600 text-white shadow-md";
-        tabEmp.className = "py-2 text-xs font-semibold rounded-lg transition-all text-slate-400 hover:text-white";
+        demoContainer.classList.remove('hidden');
+        autoFillPassword('Employee');
+      } else if (tab === 'Manager') {
+        btnMgr.className = "py-2 text-[11px] sm:text-xs font-semibold rounded-lg transition-all bg-purple-600 text-white shadow-md";
         formMgr.classList.remove('hidden');
-        formEmp.classList.add('hidden');
+        demoContainer.classList.remove('hidden');
+        autoFillPassword('Manager');
+      } else if (tab === 'Register') {
+        btnReg.className = "py-2 text-[11px] sm:text-xs font-semibold rounded-lg transition-all bg-emerald-600 text-white shadow-md";
+        formReg.classList.remove('hidden');
+        demoContainer.classList.add('hidden');
+        updateSuggestedId();
+      }
+    }
+
+    function updateSuggestedId() {
+      const role = document.getElementById('reg-role').value;
+      const existingIds = users.map(u => u.id);
+      let nextId = role === 'Employee' ? 106 : 203;
+      while (existingIds.includes(nextId)) {
+        nextId++;
+      }
+      document.getElementById('reg-id').value = nextId;
+    }
+
+    function handleRegisterSubmit(event) {
+      event.preventDefault();
+
+      const role = document.getElementById('reg-role').value;
+      const id = parseInt(document.getElementById('reg-id').value);
+      const name = document.getElementById('reg-name').value.trim();
+      const email = document.getElementById('reg-email').value.trim();
+      const dept = document.getElementById('reg-dept').value;
+      const password = document.getElementById('reg-pass').value.trim();
+
+      if (users.some(u => u.id === id)) {
+        showToast(`Account ID ${id} already exists! Choose another ID.`, 'error');
+        return;
+      }
+
+      const newUser = { id, name, email, dept, role, password };
+      users.push(newUser);
+
+      // Reset form
+      document.getElementById('reg-name').value = '';
+      document.getElementById('reg-email').value = '';
+      document.getElementById('reg-pass').value = '';
+
+      showToast(`Account created for ${name}! Sign in with Password: ${password}`, 'success');
+      populateDropdowns();
+
+      // Switch to login tab and select new user
+      if (role === 'Employee') {
+        switchAuthTab('Employee');
+        document.getElementById('login-emp-id').value = id;
+        autoFillPassword('Employee');
+      } else {
+        switchAuthTab('Manager');
+        document.getElementById('login-mgr-id').value = id;
+        autoFillPassword('Manager');
       }
     }
 
     function quickLogin(id, role) {
-      if (role !== currentLoginRole) {
-        switchLoginRole(role);
+      if (role !== activeAuthTab) {
+        switchAuthTab(role);
       }
-      if (role === 'Employee') {
-        document.getElementById('login-emp-id').value = id;
-      } else {
-        document.getElementById('login-mgr-id').value = id;
+      const user = users.find(u => u.id === id);
+      if (user) {
+        if (role === 'Employee') {
+          document.getElementById('login-emp-id').value = id;
+          document.getElementById('login-emp-pass').value = user.password;
+        } else {
+          document.getElementById('login-mgr-id').value = id;
+          document.getElementById('login-mgr-pass').value = user.password;
+        }
+        loginUser(user, user.password);
       }
-      loginUser(id);
     }
 
     function handleLoginSubmit(event) {
       event.preventDefault();
-      const id = parseInt(currentLoginRole === 'Employee' ? document.getElementById('login-emp-id').value : document.getElementById('login-mgr-id').value);
-      loginUser(id);
+      const isEmp = activeAuthTab === 'Employee';
+      const id = parseInt(isEmp ? document.getElementById('login-emp-id').value : document.getElementById('login-mgr-id').value);
+      const pass = isEmp ? document.getElementById('login-emp-pass').value : document.getElementById('login-mgr-pass').value;
+
+      const user = users.find(u => u.id === id);
+      loginUser(user, pass);
     }
 
-    function loginUser(id) {
-      const user = users.find(u => u.id === id);
+    function loginUser(user, passInput) {
       if (!user) {
-        showToast("Invalid user ID!", "error");
+        showToast("Invalid Account ID!", "error");
+        return;
+      }
+
+      if (user.password !== passInput) {
+        showToast("Error: Incorrect password for this account!", "error");
         return;
       }
 
@@ -402,7 +570,7 @@
         switchPortalTab('employee');
       }
 
-      showToast(`Welcome, ${user.name}! Logged in as ${user.role}.`, "success");
+      showToast(`Welcome back, ${user.name}! Logged in as ${user.role}.`, "success");
     }
 
     function handleLogout() {
@@ -433,7 +601,6 @@
       document.getElementById('portal-manager').classList.add('hidden');
       document.getElementById('portal-calendar').classList.add('hidden');
 
-      // Reset Tab Styles
       ['employee', 'manager', 'calendar'].forEach(t => {
         const btn = document.getElementById(`nav-btn-${t}`);
         if (btn) btn.className = "px-3 py-1.5 text-xs font-semibold rounded-lg text-slate-400 hover:text-white";
