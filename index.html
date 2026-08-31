@@ -339,22 +339,52 @@
     <p>Employee Leave Management System • Built with Java OOP Architecture</p>
   </footer>
 
-  <!-- JavaScript Portal & State Engine -->
+  <!-- JavaScript Portal & State Engine with localStorage Persistence -->
   <script>
-    // System State starts clean (Users sign up)
     let users = [];
     let leaveRequests = [];
-
     let currentUser = null;
     let activeAuthTab = 'Register';
     let nextRequestId = 1001;
 
     document.addEventListener('DOMContentLoaded', () => {
+      loadStateFromLocalStorage();
       populateDropdowns();
       setDefaultDates();
       updateSuggestedId();
-      switchAuthTab('Register');
+
+      if (users.length === 0) {
+        switchAuthTab('Register');
+      } else {
+        switchAuthTab('Employee');
+      }
     });
+
+    // Persistent LocalStorage Functions
+    function loadStateFromLocalStorage() {
+      try {
+        const savedUsers = localStorage.getItem('lms_users');
+        if (savedUsers) users = JSON.parse(savedUsers);
+
+        const savedReqs = localStorage.getItem('lms_requests');
+        if (savedReqs) leaveRequests = JSON.parse(savedReqs);
+
+        const savedId = localStorage.getItem('lms_next_req_id');
+        if (savedId) nextRequestId = parseInt(savedId);
+      } catch (e) {
+        console.error("Failed to load state from localStorage", e);
+      }
+    }
+
+    function saveStateToLocalStorage() {
+      try {
+        localStorage.setItem('lms_users', JSON.stringify(users));
+        localStorage.setItem('lms_requests', JSON.stringify(leaveRequests));
+        localStorage.setItem('lms_next_req_id', nextRequestId.toString());
+      } catch (e) {
+        console.error("Failed to save state to localStorage", e);
+      }
+    }
 
     function populateDropdowns() {
       const empSelect = document.getElementById('login-emp-id');
@@ -431,6 +461,7 @@
 
       const newUser = { id, name, email, dept, role, password };
       users.push(newUser);
+      saveStateToLocalStorage(); // Persist users to browser storage!
 
       // Reset registration inputs
       document.getElementById('reg-name').value = '';
@@ -626,6 +657,8 @@
       };
 
       leaveRequests.push(newReq);
+      saveStateToLocalStorage(); // Persist requests to browser storage!
+
       document.getElementById('leave-reason').value = '';
 
       showToast(`Leave request #${newReq.id} submitted successfully (${duration} days)!`, "success");
@@ -684,6 +717,7 @@
       const req = leaveRequests.find(r => r.id === id);
       if (req && req.status === 'PENDING') {
         req.status = 'APPROVED';
+        saveStateToLocalStorage(); // Persist approval status!
         showToast(`Leave Request #${id} APPROVED!`, "success");
         updateStats();
         renderManagerQueue();
@@ -694,6 +728,7 @@
       const req = leaveRequests.find(r => r.id === id);
       if (req && req.status === 'PENDING') {
         req.status = 'REJECTED';
+        saveStateToLocalStorage(); // Persist rejection status!
         showToast(`Leave Request #${id} REJECTED.`, "error");
         updateStats();
         renderManagerQueue();
