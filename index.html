@@ -3,13 +3,24 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Employee Leave Management System - Portal</title>
+  <title>Employee Leave Management System - Multi-Device Portal</title>
   <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
 </head>
 <body class="bg-slate-950 text-slate-100 antialiased min-h-screen p-4 md:p-8 flex flex-col justify-between">
 
   <!-- Main App Wrapper -->
   <div class="max-w-6xl mx-auto w-full space-y-6">
+
+    <!-- Cloud Sync Status Bar -->
+    <div id="cloud-sync-bar" class="flex items-center justify-between bg-slate-900 border border-slate-800 rounded-xl px-4 py-2 text-xs text-slate-400">
+      <div class="flex items-center gap-2">
+        <span id="cloud-status-icon" class="animate-pulse text-amber-400">☁️</span>
+        <span id="cloud-status-text">Connecting to Live Multi-Device Cloud Database...</span>
+      </div>
+      <button onclick="fetchCloudState(true)" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg font-medium transition-all flex items-center gap-1">
+        🔄 Refresh Cloud Data
+      </button>
+    </div>
 
     <!-- Toast Notification Banner -->
     <div id="toast" class="hidden p-4 rounded-xl border transition-all text-sm font-medium shadow-lg"></div>
@@ -23,7 +34,7 @@
           🌴
         </div>
         <h1 class="text-2xl font-bold tracking-tight text-white">Leave Management System</h1>
-        <p class="text-xs text-slate-400">Java OOP Project Portal • Register or Login to continue</p>
+        <p class="text-xs text-slate-400">Multi-Device Live Sync • Register or Login to continue</p>
       </div>
 
       <!-- Main Login & Register Card -->
@@ -46,7 +57,7 @@
         <form id="form-register" onsubmit="handleRegisterSubmit(event)" class="space-y-4">
           <div class="border-b border-slate-800 pb-2">
             <h3 class="text-xs font-bold uppercase text-emerald-400">Create New Account</h3>
-            <p class="text-[11px] text-slate-400">Sign up as an Employee or Manager</p>
+            <p class="text-[11px] text-slate-400">Account syncs instantly across all devices</p>
           </div>
 
           <div class="grid grid-cols-2 gap-3">
@@ -90,8 +101,8 @@
             <input type="password" id="reg-pass" placeholder="Enter secure password" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
           </div>
 
-          <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs py-3 rounded-xl shadow-md transition-all flex items-center justify-center gap-2">
-            ✨ Register Account & Continue to Sign In
+          <button type="submit" id="btn-register-submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs py-3 rounded-xl shadow-md transition-all flex items-center justify-center gap-2">
+            ✨ Register Account & Sync Globally
           </button>
         </form>
 
@@ -336,11 +347,14 @@
 
   <!-- Footer -->
   <footer class="mt-8 text-center text-xs text-slate-500">
-    <p>Employee Leave Management System • Built with Java OOP Architecture</p>
+    <p>Employee Leave Management System • Multi-Device Cloud Realtime Sync</p>
   </footer>
 
-  <!-- JavaScript Portal & State Engine with localStorage Persistence -->
+  <!-- JavaScript Multi-Device Cloud Sync Engine -->
   <script>
+    // Global Shared Cloud Endpoint
+    const CLOUD_URL = 'https://api.restful-api.dev/objects/ff808181a04ccf2d01a0552ebd201be5';
+
     let users = [];
     let leaveRequests = [];
     let currentUser = null;
@@ -349,18 +363,78 @@
 
     document.addEventListener('DOMContentLoaded', () => {
       loadStateFromLocalStorage();
-      populateDropdowns();
       setDefaultDates();
       updateSuggestedId();
+      fetchCloudState(false);
 
-      if (users.length === 0) {
-        switchAuthTab('Register');
-      } else {
-        switchAuthTab('Employee');
-      }
+      // Auto-poll cloud database every 8 seconds for multi-device sync
+      setInterval(() => {
+        fetchCloudState(false);
+      }, 8000);
     });
 
-    // Persistent LocalStorage Functions
+    // Fetch latest shared state from Cloud Database
+    async function fetchCloudState(showToastNotice = false) {
+      const statusIcon = document.getElementById('cloud-status-icon');
+      const statusText = document.getElementById('cloud-status-text');
+
+      if (showToastNotice) showToast("☁️ Fetching latest multi-device cloud data...", "info");
+
+      try {
+        const response = await fetch(CLOUD_URL);
+        if (response.ok) {
+          const resObj = await response.json();
+          if (resObj && resObj.data) {
+            users = resObj.data.users || [];
+            leaveRequests = resObj.data.leaveRequests || [];
+            nextRequestId = resObj.data.nextRequestId || 1001;
+
+            saveStateToLocalStorage();
+            populateDropdowns();
+            updateSuggestedId();
+            updateStats();
+
+            if (currentUser) {
+              if (document.getElementById('portal-employee').classList.contains('hidden') === false) renderEmployeeHistory();
+              if (document.getElementById('portal-manager').classList.contains('hidden') === false) renderManagerQueue();
+              if (document.getElementById('portal-calendar').classList.contains('hidden') === false) renderTeamCalendar();
+            }
+
+            statusIcon.className = "text-emerald-400";
+            statusText.textContent = `Connected to Multi-Device Cloud DB (${users.length} accounts, ${leaveRequests.length} requests)`;
+            if (showToastNotice) showToast("✅ Synced with multi-device cloud database!", "success");
+          }
+        }
+      } catch (e) {
+        console.error("Cloud fetch failed, using local backup", e);
+        statusIcon.className = "text-amber-400";
+        statusText.textContent = "Offline local backup active. Click Refresh to sync.";
+      }
+    }
+
+    // Save updated state to Cloud Database
+    async function saveCloudState() {
+      saveStateToLocalStorage();
+      try {
+        const payload = {
+          name: "LeaveManagementData",
+          data: {
+            users: users,
+            leaveRequests: leaveRequests,
+            nextRequestId: nextRequestId
+          }
+        };
+
+        await fetch(CLOUD_URL, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+      } catch (e) {
+        console.error("Failed to push update to cloud", e);
+      }
+    }
+
     function loadStateFromLocalStorage() {
       try {
         const savedUsers = localStorage.getItem('lms_users');
@@ -372,7 +446,7 @@
         const savedId = localStorage.getItem('lms_next_req_id');
         if (savedId) nextRequestId = parseInt(savedId);
       } catch (e) {
-        console.error("Failed to load state from localStorage", e);
+        console.error("Failed to load local state", e);
       }
     }
 
@@ -382,7 +456,7 @@
         localStorage.setItem('lms_requests', JSON.stringify(leaveRequests));
         localStorage.setItem('lms_next_req_id', nextRequestId.toString());
       } catch (e) {
-        console.error("Failed to save state to localStorage", e);
+        console.error("Failed to save local state", e);
       }
     }
 
@@ -444,7 +518,7 @@
       document.getElementById('reg-id').value = nextId;
     }
 
-    function handleRegisterSubmit(event) {
+    async function handleRegisterSubmit(event) {
       event.preventDefault();
 
       const role = document.getElementById('reg-role').value;
@@ -461,17 +535,17 @@
 
       const newUser = { id, name, email, dept, role, password };
       users.push(newUser);
-      saveStateToLocalStorage(); // Persist users to browser storage!
 
-      // Reset registration inputs
+      // Sync globally to cloud database so other devices see this new user instantly!
+      await saveCloudState();
+
       document.getElementById('reg-name').value = '';
       document.getElementById('reg-email').value = '';
       document.getElementById('reg-pass').value = '';
 
-      showToast(`Account registered for ${name} (ID: ${id})! You can now Sign In.`, 'success');
+      showToast(`Account registered for ${name} (ID: ${id})! Synced across all devices.`, 'success');
       populateDropdowns();
 
-      // Switch to login tab and select new user
       if (role === 'Employee') {
         switchAuthTab('Employee');
         document.getElementById('login-emp-id').value = id;
@@ -509,7 +583,6 @@
       document.getElementById('view-login').classList.add('hidden');
       document.getElementById('view-dashboard').classList.remove('hidden');
 
-      // Update Navigation Header
       document.getElementById('user-display-name').textContent = user.name;
       document.getElementById('user-display-details').textContent = `ID: ${user.id} • ${user.dept} Department • ${user.email}`;
       
@@ -623,7 +696,7 @@
       return 0;
     }
 
-    function handleLeaveSubmit(event) {
+    async function handleLeaveSubmit(event) {
       event.preventDefault();
       if (!currentUser) return;
 
@@ -657,7 +730,9 @@
       };
 
       leaveRequests.push(newReq);
-      saveStateToLocalStorage(); // Persist requests to browser storage!
+
+      // Push update to multi-device cloud database!
+      await saveCloudState();
 
       document.getElementById('leave-reason').value = '';
 
@@ -713,22 +788,22 @@
       `).join('');
     }
 
-    function approveRequest(id) {
+    async function approveRequest(id) {
       const req = leaveRequests.find(r => r.id === id);
       if (req && req.status === 'PENDING') {
         req.status = 'APPROVED';
-        saveStateToLocalStorage(); // Persist approval status!
+        await saveCloudState();
         showToast(`Leave Request #${id} APPROVED!`, "success");
         updateStats();
         renderManagerQueue();
       }
     }
 
-    function rejectRequest(id) {
+    async function rejectRequest(id) {
       const req = leaveRequests.find(r => r.id === id);
       if (req && req.status === 'PENDING') {
         req.status = 'REJECTED';
-        saveStateToLocalStorage(); // Persist rejection status!
+        await saveCloudState();
         showToast(`Leave Request #${id} REJECTED.`, "error");
         updateStats();
         renderManagerQueue();
@@ -779,7 +854,7 @@
     function showToast(message, type) {
       const toast = document.getElementById('toast');
       toast.textContent = message;
-      toast.className = `p-4 rounded-xl border transition-all text-sm font-medium shadow-lg ${type === 'success' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-rose-500/10 border-rose-500/20 text-rose-400'}`;
+      toast.className = `p-4 rounded-xl border transition-all text-sm font-medium shadow-lg ${type === 'info' ? 'bg-blue-500/10 border-blue-500/20 text-blue-400' : type === 'success' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-rose-500/10 border-rose-500/20 text-rose-400'}`;
       toast.classList.remove('hidden');
 
       setTimeout(() => {
