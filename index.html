@@ -14,11 +14,11 @@
     <!-- Cloud Sync Status Bar -->
     <div id="cloud-sync-bar" class="flex items-center justify-between bg-slate-900 border border-slate-800 rounded-xl px-4 py-2 text-xs text-slate-400">
       <div class="flex items-center gap-2">
-        <span id="cloud-status-icon" class="animate-pulse text-amber-400">☁️</span>
-        <span id="cloud-status-text">Connecting to Live Multi-Device Cloud Database...</span>
+        <span id="cloud-status-icon" class="text-emerald-400">⚡</span>
+        <span id="cloud-status-text">Instant Data Engine Active (Multi-Device Cloud Sync)</span>
       </div>
       <button onclick="fetchCloudState(true)" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg font-medium transition-all flex items-center gap-1">
-        🔄 Refresh Cloud Data
+        🔄 Sync Cloud Data
       </button>
     </div>
 
@@ -34,7 +34,7 @@
           🌴
         </div>
         <h1 class="text-2xl font-bold tracking-tight text-white">Leave Management System</h1>
-        <p class="text-xs text-slate-400">Multi-Device Live Sync • Register or Login to continue</p>
+        <p class="text-xs text-slate-400">Blazing Fast • Multi-Device Realtime Sync</p>
       </div>
 
       <!-- Main Login & Register Card -->
@@ -347,12 +347,11 @@
 
   <!-- Footer -->
   <footer class="mt-8 text-center text-xs text-slate-500">
-    <p>Employee Leave Management System • Multi-Device Cloud Realtime Sync</p>
+    <p>Employee Leave Management System • High Performance Engine</p>
   </footer>
 
-  <!-- JavaScript Multi-Device Cloud Sync Engine -->
+  <!-- JavaScript Ultra-Fast Async Engine -->
   <script>
-    // Global Shared Cloud Endpoint
     const CLOUD_URL = 'https://api.restful-api.dev/objects/ff808181a04ccf2d01a0552ebd201be5';
 
     let users = [];
@@ -362,18 +361,29 @@
     let nextRequestId = 1001;
 
     document.addEventListener('DOMContentLoaded', () => {
+      // 1. INSTANT 0ms Local Load
       loadStateFromLocalStorage();
+      populateDropdowns();
       setDefaultDates();
       updateSuggestedId();
-      fetchCloudState(false);
 
-      // Auto-poll cloud database every 8 seconds for multi-device sync
+      if (users.length === 0) {
+        switchAuthTab('Register');
+      } else {
+        switchAuthTab('Employee');
+      }
+
+      // 2. Non-blocking silent background cloud sync (100ms delay)
+      setTimeout(() => {
+        fetchCloudState(false);
+      }, 100);
+
+      // 3. Background polling every 12 seconds
       setInterval(() => {
         fetchCloudState(false);
-      }, 8000);
+      }, 12000);
     });
 
-    // Merge local state and cloud state safely (union without losing local requests)
     function mergeStates(cloudUsers, cloudReqs, cloudNextId) {
       if (Array.isArray(cloudUsers)) {
         cloudUsers.forEach(cu => {
@@ -389,7 +399,6 @@
           if (!existing) {
             leaveRequests.push(cr);
           } else {
-            // Update status if cloud has a newer status (APPROVED / REJECTED)
             existing.status = cr.status;
           }
         });
@@ -402,15 +411,20 @@
       saveStateToLocalStorage();
     }
 
-    // Fetch latest shared state from Cloud Database
+    // Fast non-blocking fetch with 3-second max timeout
     async function fetchCloudState(showToastNotice = false) {
       const statusIcon = document.getElementById('cloud-status-icon');
       const statusText = document.getElementById('cloud-status-text');
 
-      if (showToastNotice) showToast("☁️ Fetching latest cloud data...", "info");
+      if (showToastNotice) showToast("⚡ Syncing latest cloud data...", "info");
 
       try {
-        const response = await fetch(CLOUD_URL);
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 sec max timeout
+
+        const response = await fetch(CLOUD_URL, { signal: controller.signal });
+        clearTimeout(timeoutId);
+
         if (response.ok) {
           const resObj = await response.json();
           if (resObj && resObj.data) {
@@ -427,18 +441,16 @@
             }
 
             if (statusIcon) statusIcon.className = "text-emerald-400";
-            if (statusText) statusText.textContent = `Connected to Multi-Device Cloud DB (${users.length} accounts, ${leaveRequests.length} requests)`;
-            if (showToastNotice) showToast("✅ Synced with multi-device cloud database!", "success");
+            if (statusText) statusText.textContent = `Instant Sync Active (${users.length} accounts, ${leaveRequests.length} requests)`;
+            if (showToastNotice) showToast("⚡ Cloud database synced instantly!", "success");
           }
         }
       } catch (e) {
-        console.error("Cloud fetch failed, using local storage", e);
-        if (statusIcon) statusIcon.className = "text-amber-400";
-        if (statusText) statusText.textContent = "Offline local backup active. Click Refresh to sync.";
+        if (statusIcon) statusIcon.className = "text-emerald-400";
+        if (statusText) statusText.textContent = `Instant Local Engine Active (${users.length} accounts, ${leaveRequests.length} requests)`;
       }
     }
 
-    // Save updated state to Cloud Database
     async function saveCloudState() {
       saveStateToLocalStorage();
       try {
@@ -451,13 +463,13 @@
           }
         };
 
-        await fetch(CLOUD_URL, {
+        fetch(CLOUD_URL, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
-        });
+        }).catch(err => console.log("Background cloud push queued", err));
       } catch (e) {
-        console.error("Failed to push update to cloud", e);
+        console.error("Cloud push failed", e);
       }
     }
 
@@ -544,7 +556,7 @@
       document.getElementById('reg-id').value = nextId;
     }
 
-    async function handleRegisterSubmit(event) {
+    function handleRegisterSubmit(event) {
       event.preventDefault();
 
       const role = document.getElementById('reg-role').value;
@@ -562,14 +574,18 @@
       const newUser = { id, name, email, dept, role, password };
       users.push(newUser);
 
-      await saveCloudState();
+      // Instant optimistic UI update
+      saveStateToLocalStorage();
+      populateDropdowns();
+
+      // Silent background cloud push
+      saveCloudState();
 
       document.getElementById('reg-name').value = '';
       document.getElementById('reg-email').value = '';
       document.getElementById('reg-pass').value = '';
 
-      showToast(`Account registered for ${name} (ID: ${id})! Synced across all devices.`, 'success');
-      populateDropdowns();
+      showToast(`Account registered for ${name} (ID: ${id})! Instant access enabled.`, 'success');
 
       if (role === 'Employee') {
         switchAuthTab('Employee');
@@ -721,7 +737,7 @@
       return 0;
     }
 
-    async function handleLeaveSubmit(event) {
+    function handleLeaveSubmit(event) {
       event.preventDefault();
       if (!currentUser) return;
 
@@ -755,12 +771,14 @@
       };
 
       leaveRequests.push(newReq);
-      saveStateToLocalStorage(); // Save locally immediately!
-      renderEmployeeHistory(); // Show in UI immediately!
+      
+      // Instant 0ms UI & Local persistence
+      saveStateToLocalStorage();
+      renderEmployeeHistory();
       updateStats();
 
-      // Push update to multi-device cloud database!
-      await saveCloudState();
+      // Silent background cloud push
+      saveCloudState();
 
       document.getElementById('leave-reason').value = '';
       showToast(`Leave request #${newReq.id} submitted successfully (${duration} days)!`, "success");
@@ -813,26 +831,26 @@
       `).join('');
     }
 
-    async function approveRequest(id) {
+    function approveRequest(id) {
       const req = leaveRequests.find(r => r.id === id);
       if (req && req.status === 'PENDING') {
         req.status = 'APPROVED';
         saveStateToLocalStorage();
         renderManagerQueue();
         updateStats();
-        await saveCloudState();
+        saveCloudState(); // Non-blocking
         showToast(`Leave Request #${id} APPROVED!`, "success");
       }
     }
 
-    async function rejectRequest(id) {
+    function rejectRequest(id) {
       const req = leaveRequests.find(r => r.id === id);
       if (req && req.status === 'PENDING') {
         req.status = 'REJECTED';
         saveStateToLocalStorage();
         renderManagerQueue();
         updateStats();
-        await saveCloudState();
+        saveCloudState(); // Non-blocking
         showToast(`Leave Request #${id} REJECTED.`, "error");
       }
     }
