@@ -373,42 +373,68 @@
       }, 8000);
     });
 
+    // Merge local state and cloud state safely (union without losing local requests)
+    function mergeStates(cloudUsers, cloudReqs, cloudNextId) {
+      if (Array.isArray(cloudUsers)) {
+        cloudUsers.forEach(cu => {
+          if (!users.some(u => u.id === cu.id)) {
+            users.push(cu);
+          }
+        });
+      }
+
+      if (Array.isArray(cloudReqs)) {
+        cloudReqs.forEach(cr => {
+          const existing = leaveRequests.find(r => r.id === cr.id);
+          if (!existing) {
+            leaveRequests.push(cr);
+          } else {
+            // Update status if cloud has a newer status (APPROVED / REJECTED)
+            existing.status = cr.status;
+          }
+        });
+      }
+
+      if (cloudNextId && cloudNextId > nextRequestId) {
+        nextRequestId = cloudNextId;
+      }
+
+      saveStateToLocalStorage();
+    }
+
     // Fetch latest shared state from Cloud Database
     async function fetchCloudState(showToastNotice = false) {
       const statusIcon = document.getElementById('cloud-status-icon');
       const statusText = document.getElementById('cloud-status-text');
 
-      if (showToastNotice) showToast("☁️ Fetching latest multi-device cloud data...", "info");
+      if (showToastNotice) showToast("☁️ Fetching latest cloud data...", "info");
 
       try {
         const response = await fetch(CLOUD_URL);
         if (response.ok) {
           const resObj = await response.json();
           if (resObj && resObj.data) {
-            users = resObj.data.users || [];
-            leaveRequests = resObj.data.leaveRequests || [];
-            nextRequestId = resObj.data.nextRequestId || 1001;
+            mergeStates(resObj.data.users || [], resObj.data.leaveRequests || [], resObj.data.nextRequestId || 1001);
 
-            saveStateToLocalStorage();
             populateDropdowns();
             updateSuggestedId();
             updateStats();
 
             if (currentUser) {
-              if (document.getElementById('portal-employee').classList.contains('hidden') === false) renderEmployeeHistory();
-              if (document.getElementById('portal-manager').classList.contains('hidden') === false) renderManagerQueue();
-              if (document.getElementById('portal-calendar').classList.contains('hidden') === false) renderTeamCalendar();
+              if (!document.getElementById('portal-employee').classList.contains('hidden')) renderEmployeeHistory();
+              if (!document.getElementById('portal-manager').classList.contains('hidden')) renderManagerQueue();
+              if (!document.getElementById('portal-calendar').classList.contains('hidden')) renderTeamCalendar();
             }
 
-            statusIcon.className = "text-emerald-400";
-            statusText.textContent = `Connected to Multi-Device Cloud DB (${users.length} accounts, ${leaveRequests.length} requests)`;
+            if (statusIcon) statusIcon.className = "text-emerald-400";
+            if (statusText) statusText.textContent = `Connected to Multi-Device Cloud DB (${users.length} accounts, ${leaveRequests.length} requests)`;
             if (showToastNotice) showToast("✅ Synced with multi-device cloud database!", "success");
           }
         }
       } catch (e) {
-        console.error("Cloud fetch failed, using local backup", e);
-        statusIcon.className = "text-amber-400";
-        statusText.textContent = "Offline local backup active. Click Refresh to sync.";
+        console.error("Cloud fetch failed, using local storage", e);
+        if (statusIcon) statusIcon.className = "text-amber-400";
+        if (statusText) statusText.textContent = "Offline local backup active. Click Refresh to sync.";
       }
     }
 
@@ -536,7 +562,6 @@
       const newUser = { id, name, email, dept, role, password };
       users.push(newUser);
 
-      // Sync globally to cloud database so other devices see this new user instantly!
       await saveCloudState();
 
       document.getElementById('reg-name').value = '';
@@ -730,15 +755,15 @@
       };
 
       leaveRequests.push(newReq);
+      saveStateToLocalStorage(); // Save locally immediately!
+      renderEmployeeHistory(); // Show in UI immediately!
+      updateStats();
 
       // Push update to multi-device cloud database!
       await saveCloudState();
 
       document.getElementById('leave-reason').value = '';
-
       showToast(`Leave request #${newReq.id} submitted successfully (${duration} days)!`, "success");
-      updateStats();
-      renderEmployeeHistory();
     }
 
     function renderEmployeeHistory() {
@@ -792,10 +817,11 @@
       const req = leaveRequests.find(r => r.id === id);
       if (req && req.status === 'PENDING') {
         req.status = 'APPROVED';
+        saveStateToLocalStorage();
+        renderManagerQueue();
+        updateStats();
         await saveCloudState();
         showToast(`Leave Request #${id} APPROVED!`, "success");
-        updateStats();
-        renderManagerQueue();
       }
     }
 
@@ -803,10 +829,11 @@
       const req = leaveRequests.find(r => r.id === id);
       if (req && req.status === 'PENDING') {
         req.status = 'REJECTED';
+        saveStateToLocalStorage();
+        renderManagerQueue();
+        updateStats();
         await saveCloudState();
         showToast(`Leave Request #${id} REJECTED.`, "error");
-        updateStats();
-        renderManagerQueue();
       }
     }
 
