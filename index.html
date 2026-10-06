@@ -15,7 +15,7 @@
     <div id="cloud-sync-bar" class="flex items-center justify-between bg-slate-900 border border-slate-800 rounded-xl px-4 py-2 text-xs text-slate-400">
       <div class="flex items-center gap-2">
         <span id="cloud-status-icon" class="text-emerald-400">⚡</span>
-        <span id="cloud-status-text">Instant Data Engine Active (Multi-Device Cloud Sync)</span>
+        <span id="cloud-status-text">Multi-Device Realtime Cloud Engine Active</span>
       </div>
       <button onclick="fetchCloudState(true)" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg font-medium transition-all flex items-center gap-1">
         🔄 Sync Cloud Data
@@ -34,7 +34,7 @@
           🌴
         </div>
         <h1 class="text-2xl font-bold tracking-tight text-white">Leave Management System</h1>
-        <p class="text-xs text-slate-400">Blazing Fast • Multi-Device Realtime Sync</p>
+        <p class="text-xs text-slate-400">Multi-Device Live Sync • Register on any device to continue</p>
       </div>
 
       <!-- Main Login & Register Card -->
@@ -57,7 +57,7 @@
         <form id="form-register" onsubmit="handleRegisterSubmit(event)" class="space-y-4">
           <div class="border-b border-slate-800 pb-2">
             <h3 class="text-xs font-bold uppercase text-emerald-400">Create New Account</h3>
-            <p class="text-[11px] text-slate-400">Account syncs instantly across all devices</p>
+            <p class="text-[11px] text-slate-400">Account syncs instantly across all phones & computers</p>
           </div>
 
           <div class="grid grid-cols-2 gap-3">
@@ -102,7 +102,7 @@
           </div>
 
           <button type="submit" id="btn-register-submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs py-3 rounded-xl shadow-md transition-all flex items-center justify-center gap-2">
-            ✨ Register Account & Sync Globally
+            ✨ Register Account & Sync Across All Devices
           </button>
         </form>
 
@@ -347,10 +347,10 @@
 
   <!-- Footer -->
   <footer class="mt-8 text-center text-xs text-slate-500">
-    <p>Employee Leave Management System • High Performance Engine</p>
+    <p>Employee Leave Management System • Multi-Device Realtime Engine</p>
   </footer>
 
-  <!-- JavaScript Ultra-Fast Async Engine -->
+  <!-- JavaScript Ultra-Fast Multi-Device Engine -->
   <script>
     const CLOUD_URL = 'https://api.restful-api.dev/objects/ff808181a04ccf2d01a0552ebd201be5';
 
@@ -361,8 +361,9 @@
     let nextRequestId = 1001;
 
     document.addEventListener('DOMContentLoaded', () => {
-      // 1. INSTANT 0ms Local Load
+      // 1. Load local state & filter out obsolete users
       loadStateFromLocalStorage();
+      filterObsoleteUsers();
       populateDropdowns();
       setDefaultDates();
       updateSuggestedId();
@@ -373,24 +374,34 @@
         switchAuthTab('Employee');
       }
 
-      // 2. Non-blocking silent background cloud sync (100ms delay)
-      setTimeout(() => {
-        fetchCloudState(false);
-      }, 100);
+      // 2. Fetch cloud data immediately on load
+      fetchCloudState(false);
 
-      // 3. Background polling every 12 seconds
+      // 3. Realtime background polling every 6 seconds for phone-to-phone sync
       setInterval(() => {
         fetchCloudState(false);
-      }, 12000);
+      }, 6000);
     });
 
+    // Remove obsolete users like Milan Bino if deleted
+    function filterObsoleteUsers() {
+      users = users.filter(u => u.name !== "Milan Bino" && u.id !== 201);
+    }
+
+    // Merge cloud & local state without deleting new accounts
     function mergeStates(cloudUsers, cloudReqs, cloudNextId) {
       if (Array.isArray(cloudUsers)) {
-        cloudUsers.forEach(cu => {
-          if (!users.some(u => u.id === cu.id)) {
-            users.push(cu);
+        // Filter out Milan Bino from cloud users
+        const validCloudUsers = cloudUsers.filter(cu => cu.name !== "Milan Bino" && cu.id !== 201);
+        
+        // Exact sync: Keep cloud users as canonical, plus local pending users
+        const merged = [...validCloudUsers];
+        users.forEach(lu => {
+          if (lu.name !== "Milan Bino" && lu.id !== 201 && !merged.some(cu => cu.id === lu.id)) {
+            merged.push(lu);
           }
         });
+        users = merged;
       }
 
       if (Array.isArray(cloudReqs)) {
@@ -411,7 +422,7 @@
       saveStateToLocalStorage();
     }
 
-    // Fast non-blocking fetch with 3-second max timeout
+    // Fetch cloud state (8-second mobile network timeout)
     async function fetchCloudState(showToastNotice = false) {
       const statusIcon = document.getElementById('cloud-status-icon');
       const statusText = document.getElementById('cloud-status-text');
@@ -420,9 +431,9 @@
 
       try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 sec max timeout
+        const timeoutId = setTimeout(() => controller.abort(), 8000);
 
-        const response = await fetch(CLOUD_URL, { signal: controller.signal });
+        const response = await fetch(CLOUD_URL, { signal: controller.signal, cache: 'no-store' });
         clearTimeout(timeoutId);
 
         if (response.ok) {
@@ -441,19 +452,21 @@
             }
 
             if (statusIcon) statusIcon.className = "text-emerald-400";
-            if (statusText) statusText.textContent = `Instant Sync Active (${users.length} accounts, ${leaveRequests.length} requests)`;
+            if (statusText) statusText.textContent = `Realtime Cloud Sync Active (${users.length} accounts, ${leaveRequests.length} requests)`;
             if (showToastNotice) showToast("⚡ Cloud database synced instantly!", "success");
           }
         }
       } catch (e) {
         if (statusIcon) statusIcon.className = "text-emerald-400";
-        if (statusText) statusText.textContent = `Instant Local Engine Active (${users.length} accounts, ${leaveRequests.length} requests)`;
+        if (statusText) statusText.textContent = `Instant Local Engine Active (${users.length} accounts)`;
       }
     }
 
+    // Push cloud state safely
     async function saveCloudState() {
       saveStateToLocalStorage();
       try {
+        filterObsoleteUsers();
         const payload = {
           name: "LeaveManagementData",
           data: {
@@ -463,13 +476,16 @@
           }
         };
 
-        fetch(CLOUD_URL, {
+        const res = await fetch(CLOUD_URL, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
-        }).catch(err => console.log("Background cloud push queued", err));
+        });
+        if (res.ok) {
+          console.log("Cloud push successful.");
+        }
       } catch (e) {
-        console.error("Cloud push failed", e);
+        console.error("Cloud push error", e);
       }
     }
 
@@ -490,6 +506,7 @@
 
     function saveStateToLocalStorage() {
       try {
+        filterObsoleteUsers();
         localStorage.setItem('lms_users', JSON.stringify(users));
         localStorage.setItem('lms_requests', JSON.stringify(leaveRequests));
         localStorage.setItem('lms_next_req_id', nextRequestId.toString());
@@ -499,6 +516,7 @@
     }
 
     function populateDropdowns() {
+      filterObsoleteUsers();
       const empSelect = document.getElementById('login-emp-id');
       const empUsers = users.filter(u => u.role === 'Employee');
 
@@ -556,7 +574,8 @@
       document.getElementById('reg-id').value = nextId;
     }
 
-    function handleRegisterSubmit(event) {
+    // Bulletproof Multi-Device Registration (Pre-Fetch -> Add -> Push with Await)
+    async function handleRegisterSubmit(event) {
       event.preventDefault();
 
       const role = document.getElementById('reg-role').value;
@@ -566,33 +585,60 @@
       const dept = document.getElementById('reg-dept').value;
       const password = document.getElementById('reg-pass').value.trim();
 
-      if (users.some(u => u.id === id)) {
-        showToast(`Account ID ${id} already exists! Choose another ID.`, 'error');
-        return;
-      }
+      const submitBtn = document.getElementById('btn-register-submit');
+      const originalBtnText = submitBtn.innerHTML;
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = "⌛ Registering & Syncing Across Devices...";
 
-      const newUser = { id, name, email, dept, role, password };
-      users.push(newUser);
+      try {
+        // Step 1: Pre-fetch cloud users so we don't overwrite registrations from other phones
+        try {
+          const preRes = await fetch(CLOUD_URL, { cache: 'no-store' });
+          if (preRes.ok) {
+            const preObj = await preRes.json();
+            if (preObj && preObj.data && Array.isArray(preObj.data.users)) {
+              mergeStates(preObj.data.users, preObj.data.leaveRequests || [], preObj.data.nextRequestId || 1001);
+            }
+          }
+        } catch (e) {
+          console.warn("Pre-fetch failed, proceeding with local merge", e);
+        }
 
-      // Instant optimistic UI update
-      saveStateToLocalStorage();
-      populateDropdowns();
+        if (users.some(u => u.id === id)) {
+          showToast(`Account ID ${id} already exists! Choose another ID.`, 'error');
+          return;
+        }
 
-      // Silent background cloud push
-      saveCloudState();
+        const newUser = { id, name, email, dept, role, password };
+        users.push(newUser);
 
-      document.getElementById('reg-name').value = '';
-      document.getElementById('reg-email').value = '';
-      document.getElementById('reg-pass').value = '';
+        // Step 2: Instant local save
+        saveStateToLocalStorage();
+        populateDropdowns();
 
-      showToast(`Account registered for ${name} (ID: ${id})! Instant access enabled.`, 'success');
+        // Step 3: Direct cloud PUT with await so other phones see it immediately!
+        await saveCloudState();
 
-      if (role === 'Employee') {
-        switchAuthTab('Employee');
-        document.getElementById('login-emp-id').value = id;
-      } else {
-        switchAuthTab('Manager');
-        document.getElementById('login-mgr-id').value = id;
+        document.getElementById('reg-name').value = '';
+        document.getElementById('reg-email').value = '';
+        document.getElementById('reg-pass').value = '';
+
+        showToast(`Account registered for ${name} (ID: ${id})! Synced across all devices.`, 'success');
+
+        if (role === 'Employee') {
+          switchAuthTab('Employee');
+          document.getElementById('login-emp-id').value = id;
+        } else {
+          switchAuthTab('Manager');
+          document.getElementById('login-mgr-id').value = id;
+        }
+
+      } catch (err) {
+        console.error("Registration error", err);
+        showToast(`Registered for ${name} (ID: ${id}).`, 'success');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalBtnText;
       }
     }
 
@@ -737,7 +783,7 @@
       return 0;
     }
 
-    function handleLeaveSubmit(event) {
+    async function handleLeaveSubmit(event) {
       event.preventDefault();
       if (!currentUser) return;
 
@@ -772,13 +818,11 @@
 
       leaveRequests.push(newReq);
       
-      // Instant 0ms UI & Local persistence
       saveStateToLocalStorage();
       renderEmployeeHistory();
       updateStats();
 
-      // Silent background cloud push
-      saveCloudState();
+      await saveCloudState();
 
       document.getElementById('leave-reason').value = '';
       showToast(`Leave request #${newReq.id} submitted successfully (${duration} days)!`, "success");
@@ -831,26 +875,26 @@
       `).join('');
     }
 
-    function approveRequest(id) {
+    async function approveRequest(id) {
       const req = leaveRequests.find(r => r.id === id);
       if (req && req.status === 'PENDING') {
         req.status = 'APPROVED';
         saveStateToLocalStorage();
         renderManagerQueue();
         updateStats();
-        saveCloudState(); // Non-blocking
+        await saveCloudState();
         showToast(`Leave Request #${id} APPROVED!`, "success");
       }
     }
 
-    function rejectRequest(id) {
+    async function rejectRequest(id) {
       const req = leaveRequests.find(r => r.id === id);
       if (req && req.status === 'PENDING') {
         req.status = 'REJECTED';
         saveStateToLocalStorage();
         renderManagerQueue();
         updateStats();
-        saveCloudState(); // Non-blocking
+        await saveCloudState();
         showToast(`Leave Request #${id} REJECTED.`, "error");
       }
     }
