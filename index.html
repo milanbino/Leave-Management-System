@@ -347,14 +347,21 @@
 
   <!-- Footer -->
   <footer class="mt-8 text-center text-xs text-slate-500">
-    <p>Employee Leave Management System • Multi-Device Realtime Engine</p>
+    <p>Employee Leave Management System • Native High-Speed API Engine</p>
   </footer>
 
-  <!-- JavaScript Ultra-Fast Multi-Device Engine -->
+  <!-- JavaScript Ultra-Fast Native Sync Engine -->
   <script>
-    const CLOUD_URL = 'https://api.restful-api.dev/objects/ff808181a04ccf2d01a0552ebd201be5';
+    // Native Vercel Serverless Sync API Endpoint
+    const CLOUD_URL = '/api/sync';
 
-    let users = [];
+    let users = [
+      { id: 101, name: "Alex M", email: "alex11@gmail.com", dept: "IT", role: "Employee", password: "alex11" },
+      { id: 202, name: "NIDHILA", email: "nidhila@gmail.com", dept: "Marketing", role: "Manager", password: "nidhila123" },
+      { id: 102, name: "Anu", email: "Anu12@gmail.com", dept: "Finance", role: "Employee", password: "anu123" },
+      { id: 103, name: "Arya", email: "Arya123@gmail.com", dept: "Marketing", role: "Employee", password: "arya@123" },
+      { id: 104, name: "Tojo", email: "tojo@gmail.com", dept: "Sales", role: "Employee", password: "tojo12" }
+    ];
     let leaveRequests = [];
     let currentUser = null;
     let activeAuthTab = 'Register';
@@ -377,24 +384,20 @@
       // 2. Fetch cloud data immediately on load
       fetchCloudState(false);
 
-      // 3. Realtime background polling every 6 seconds for phone-to-phone sync
+      // 3. Realtime background polling every 5 seconds for phone-to-phone sync
       setInterval(() => {
         fetchCloudState(false);
-      }, 6000);
+      }, 5000);
     });
 
-    // Remove obsolete users like Milan Bino if deleted
     function filterObsoleteUsers() {
       users = users.filter(u => u.name !== "Milan Bino" && u.id !== 201);
     }
 
-    // Merge cloud & local state without deleting new accounts
     function mergeStates(cloudUsers, cloudReqs, cloudNextId) {
       if (Array.isArray(cloudUsers)) {
-        // Filter out Milan Bino from cloud users
         const validCloudUsers = cloudUsers.filter(cu => cu.name !== "Milan Bino" && cu.id !== 201);
         
-        // Exact sync: Keep cloud users as canonical, plus local pending users
         const merged = [...validCloudUsers];
         users.forEach(lu => {
           if (lu.name !== "Milan Bino" && lu.id !== 201 && !merged.some(cu => cu.id === lu.id)) {
@@ -422,7 +425,7 @@
       saveStateToLocalStorage();
     }
 
-    // Fetch cloud state (8-second mobile network timeout)
+    // Fetch Cloud State via Native Vercel Serverless Function
     async function fetchCloudState(showToastNotice = false) {
       const statusIcon = document.getElementById('cloud-status-icon');
       const statusText = document.getElementById('cloud-status-text');
@@ -431,7 +434,7 @@
 
       try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 8000);
+        const timeoutId = setTimeout(() => controller.abort(), 6000);
 
         const response = await fetch(CLOUD_URL, { signal: controller.signal, cache: 'no-store' });
         clearTimeout(timeoutId);
@@ -452,7 +455,7 @@
             }
 
             if (statusIcon) statusIcon.className = "text-emerald-400";
-            if (statusText) statusText.textContent = `Realtime Cloud Sync Active (${users.length} accounts, ${leaveRequests.length} requests)`;
+            if (statusText) statusText.textContent = `Vercel Realtime Sync Active (${users.length} registered accounts)`;
             if (showToastNotice) showToast("⚡ Cloud database synced instantly!", "success");
           }
         }
@@ -462,13 +465,12 @@
       }
     }
 
-    // Push cloud state safely
+    // Push State to Native Vercel Serverless Function
     async function saveCloudState() {
       saveStateToLocalStorage();
       try {
         filterObsoleteUsers();
         const payload = {
-          name: "LeaveManagementData",
           data: {
             users: users,
             leaveRequests: leaveRequests,
@@ -477,15 +479,15 @@
         };
 
         const res = await fetch(CLOUD_URL, {
-          method: 'PUT',
+          method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
         });
         if (res.ok) {
-          console.log("Cloud push successful.");
+          console.log("Vercel native sync successful.");
         }
       } catch (e) {
-        console.error("Cloud push error", e);
+        console.error("Vercel native sync error", e);
       }
     }
 
@@ -574,7 +576,7 @@
       document.getElementById('reg-id').value = nextId;
     }
 
-    // Bulletproof Multi-Device Registration (Pre-Fetch -> Add -> Push with Await)
+    // Bulletproof Multi-Device Registration Sync
     async function handleRegisterSubmit(event) {
       event.preventDefault();
 
@@ -591,19 +593,6 @@
       submitBtn.innerHTML = "⌛ Registering & Syncing Across Devices...";
 
       try {
-        // Step 1: Pre-fetch cloud users so we don't overwrite registrations from other phones
-        try {
-          const preRes = await fetch(CLOUD_URL, { cache: 'no-store' });
-          if (preRes.ok) {
-            const preObj = await preRes.json();
-            if (preObj && preObj.data && Array.isArray(preObj.data.users)) {
-              mergeStates(preObj.data.users, preObj.data.leaveRequests || [], preObj.data.nextRequestId || 1001);
-            }
-          }
-        } catch (e) {
-          console.warn("Pre-fetch failed, proceeding with local merge", e);
-        }
-
         if (users.some(u => u.id === id)) {
           showToast(`Account ID ${id} already exists! Choose another ID.`, 'error');
           return;
@@ -612,11 +601,11 @@
         const newUser = { id, name, email, dept, role, password };
         users.push(newUser);
 
-        // Step 2: Instant local save
+        // 1. Instant local save & UI update
         saveStateToLocalStorage();
         populateDropdowns();
 
-        // Step 3: Direct cloud PUT with await so other phones see it immediately!
+        // 2. Direct serverless API push with await
         await saveCloudState();
 
         document.getElementById('reg-name').value = '';
@@ -783,7 +772,7 @@
       return 0;
     }
 
-    async function handleLeaveSubmit(event) {
+    function handleLeaveSubmit(event) {
       event.preventDefault();
       if (!currentUser) return;
 
@@ -822,7 +811,7 @@
       renderEmployeeHistory();
       updateStats();
 
-      await saveCloudState();
+      saveCloudState();
 
       document.getElementById('leave-reason').value = '';
       showToast(`Leave request #${newReq.id} submitted successfully (${duration} days)!`, "success");
@@ -875,26 +864,26 @@
       `).join('');
     }
 
-    async function approveRequest(id) {
+    function approveRequest(id) {
       const req = leaveRequests.find(r => r.id === id);
       if (req && req.status === 'PENDING') {
         req.status = 'APPROVED';
         saveStateToLocalStorage();
         renderManagerQueue();
         updateStats();
-        await saveCloudState();
+        saveCloudState();
         showToast(`Leave Request #${id} APPROVED!`, "success");
       }
     }
 
-    async function rejectRequest(id) {
+    function rejectRequest(id) {
       const req = leaveRequests.find(r => r.id === id);
       if (req && req.status === 'PENDING') {
         req.status = 'REJECTED';
         saveStateToLocalStorage();
         renderManagerQueue();
         updateStats();
-        await saveCloudState();
+        saveCloudState();
         showToast(`Leave Request #${id} REJECTED.`, "error");
       }
     }
